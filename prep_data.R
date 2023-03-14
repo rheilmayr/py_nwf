@@ -35,3 +35,9 @@ district_shp_list <- list.files(admin_dir, pattern="DISTRITOS")
 for (file in district_shp_list) {
   file.copy(paste0(admin_dir, file), paste0(out_dir, 'other_projects/'))
 }
+
+
+border_shp_list <- list.files(admin_dir, pattern="east_west")
+for (file in border_shp_list) {
+  file.copy(paste0(admin_dir, file), paste0(out_dir, 'other_projects/'))
+}
