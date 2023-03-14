@@ -11,23 +11,30 @@
 # Package imports --------------------------------------------------------
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 library(tidyverse)
+library(tmap)
 library(sf)
 library(janitor)
+library(units)
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Load data --------------------------------------------------------
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+data_dir <- 'remote/in/'
+
 ## Load Hansen data
-lbcs_data_dir <- 'L:/Shared drives/emlab/projects/current-projects/land-based-solutions/data/processed/'
-load(paste0(lbcs_data_dir, 'data_paraguay.Rdata'))
+load(paste0(data_dir, 'other_projects/data_paraguay.Rdata'))
 defor_df <- dat
 
 ## Add Administrative boundaries
-celpy_data_dir <- 'L:/Shared drives/emlab/projects/current-projects/cel-Paraguay-crops/Data/'
-district_shp <- paste0(celpy_data_dir, '01_Raw_data/Boundaries-Infrastructure/DEEGC/DISTRITOS_PARAGUAY_2012.shp')
+district_shp <- paste0(data_dir, 'other_projects/DISTRITOS_PARAGUAY_2012.shp')
 district_sf <- st_read(district_shp)
 district_sf <- district_sf %>% 
   clean_names()
+
+## Chaco border
+border_shp <- paste0(data_dir, 'other_projects/east_west_border.shp')
+border_sf <- st_read(border_shp)
+
 
 ## Add slaughterhouses
 
@@ -126,7 +133,6 @@ defor_sf <- defor_sf %>%
 
 defor_sf <- defor_sf %>% 
   st_join(district_sf)
-
 chaco_dpto <- c("ALTO PARAGUAY", "BOQUERON", "PRESIDENTE HAYES")
 defor_sf <- defor_sf %>% 
   mutate(chaco = case_when(
@@ -135,7 +141,25 @@ defor_sf <- defor_sf %>%
     is.na(dpto_desc) ~ NA
   ))
 
+biome_distance <- defor_sf %>%
+  filter(year == 2020) %>% 
+  select(grid_cell_id, geometry) %>% 
+  mutate(biome_dist = st_distance(biome_distance, border_sf))
+
+biome_distance <- biome_distance %>% 
+  mutate(biome_dist = drop_units(biome_dist) / 1000) %>% 
+  st_drop_geometry()
+
+defor_sf <- defor_sf %>% 
+  left_join(biome_distance, by = "grid_cell_id") %>% 
+  mutate(biome_dist = ifelse(chaco, -biome_dist, biome_dist))
+
+
+
+
+
 defor_trends <- defor_sf %>% 
+  filter(abs(biome_dist)<200) %>% 
   group_by(chaco, year) %>% 
   summarize(defor = sum(annual_forest_loss_pixel_count ),
             forest = sum(treecover_annual)) %>% 
