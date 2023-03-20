@@ -32,14 +32,14 @@ library(dlookr)
 library(khroma)
 
 # set working directory --------------------------------------
-wdir <- "remote/in/"
+wdir <- "remote/"
 
 ## read data -------------------------------------------------
 
 # extracted soy annual cover and mapbiomas annual deforestation
-py_soy_def <- read_csv(paste0(wdir,"gee/py_random_pts_annual_soy_expansion_mapb_def_chaco.csv"))
+py_soy_def <- read_csv(paste0(wdir,"in/gee/py_random_pts_annual_soy_expansion_mapb_def_chaco.csv"))
 # py departments and districts
-py_adm <- read_sf(paste0(wdir,"other_projects/DISTRITOS_PARAGUAY_2012.shp")) %>%
+py_adm <- read_sf(paste0(wdir,"in/other_projects/DISTRITOS_PARAGUAY_2012.shp")) %>%
   select(dpto=DPTO_DESC,distrito=DIST_DESC)
 
 ## set crs ---------------------------------------------------
@@ -130,19 +130,19 @@ theme_plot <- theme(text = element_text(family = "DM Sans",colour="#3A484F"),
                     axis.ticks.x = element_blank(),
                     axis.ticks.y = element_blank(),
                     panel.spacing = unit(2, "lines"),
-                    axis.text.x = element_text(size = 8, color = "grey30",angle = 0, face="bold"),
-                    axis.text.y = element_text(size = 9, color = "grey30"),
-                    axis.title.x = element_text(size = 10, color = "grey30"),
-                    axis.title.y = element_text(size = 10, color = "grey30"),
-                    strip.text.x = element_text(size = 12, face = "bold",color="grey30"),
+                    axis.text.x = element_text(size = 20, color = "grey30",angle = 0, face="bold"),
+                    axis.text.y = element_text(size = 20, color = "grey30"),
+                    axis.title.x = element_text(size = 22, color = "grey30"),
+                    axis.title.y = element_text(size = 22, color = "grey30"),
+                    strip.text.x = element_text(size = 20, face = "bold",color="grey30"),
                     strip.background = element_rect(color=NA, fill=NA),
                     legend.key.height = unit(12, "pt"),
                     legend.key.width = unit(12, "pt"),
-                    legend.text = element_text(size = 7,colour="grey30"),
-                    legend.title = element_text(size = 9,colour="grey30"),
+                    legend.text = element_text(size = 24,colour="grey30"),
+                    legend.title = element_text(size = 20,colour="grey30"),
                     legend.position="bottom",
                     legend.direction="horizontal",
-                    plot.margin=unit(c(0.1,1.5,0.1,0.5),"cm"))
+                    plot.margin=unit(c(0.1,1.5,0.1,0.5),"in"))
 
 options(crayon.enabled = FALSE)
 
@@ -154,13 +154,16 @@ p1 <- ggplot(data = py_soy_def_yr_diff, aes(x = soy_def_yr_diff, y = n_samples,f
   scale_x_continuous(breaks = seq(from = min(py_soy_def_yr_diff$soy_def_yr_diff), to = max(py_soy_def_yr_diff$soy_def_yr_diff), by =1),expand=c(0,0)) +
   geom_col() +
   ylab("No of samples converted to soy\n") +
-  xlab("\nYears after initial deforestation") +
+  xlab("Years after initial deforestation") +
   theme_plot +
   scale_fill_manual(values = c('#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c',
                     '#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#bdbdbd')) +
   guides(fill = guide_legend(title.position = "top",title="Department"))
 
 p1
+
+ggsave(p1,file=paste0(wdir,"out\\plots\\soy_deforestation_plot.png"), dpi=300, w=10, h=6, units = "in") 
+
 
 # plot 2: Deforestation land cover type by year
 
