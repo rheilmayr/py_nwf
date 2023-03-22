@@ -67,7 +67,7 @@ theme_plot <- theme(text = element_text(family = "DM Sans",colour="#3A484F"),
                     panel.grid.minor = element_blank(),
                     panel.grid.major.x = element_line(color="grey70",linetype="dashed",linewidth=0.35),
                     plot.title = element_text(hjust = 0.5),
-                    axis.line.x = element_line(),
+                    axis.line.y = element_line(),
                     axis.ticks.x = element_blank(),
                     axis.ticks.y = element_blank(),
                     panel.spacing = unit(2, "lines"),
@@ -88,16 +88,16 @@ theme_plot <- theme(text = element_text(family = "DM Sans",colour="#3A484F"),
 options(crayon.enabled = FALSE)
 
 p1 <- ggplot(data = lc_class_long, aes(x = AREA_HA, y = reorder(DIST_DESC, AREA_HA), 
-     fill=factor(CLASS_DESC, levels=c("Forest", "Other Wooded Lands (OWL)", "Neither")), 
-     color = factor(CLASS_DESC, levels=c("Forest", "Other Wooded Lands (OWL)", "Neither")))) + 
+     fill=factor(CLASS_DESC, levels=c("Neither","Other Wooded Lands (OWL)","Forest")), 
+     color = factor(CLASS_DESC, levels=c("Neither","Other Wooded Lands (OWL)","Forest")))) + 
   scale_x_continuous(labels = d3_format(".2~s"),expand=c(0,0)) +
   geom_col(linewidth=0.1) +
   xlab("Area (ha)") +
   ylab("Distritos") +
   theme_plot +
-  scale_fill_manual(values = c('#33a02c','#b15928','#a6cee3')) +
-  scale_color_manual(values = c('#33a02c','#b15928','#a6cee3')) +
-                                          guides(fill = guide_legend(title.position = "top",title=""),
+  scale_fill_manual(values = c('#a6cee3','#b15928','#33a02c')) +
+  scale_color_manual(values = c('#a6cee3','#b15928','#33a02c')) +
+                                          guides(fill = guide_legend(title.position = "top",title="",reverse = TRUE),
                                                  color=FALSE) +
   facet_wrap(DPTO_DESC~.,nrow=3,scales="free_y") 
 
