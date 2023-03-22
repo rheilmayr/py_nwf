@@ -114,10 +114,11 @@ py_soy_def_yr_diff <- py_def_long %>%
   mutate(region = ifelse(dpto %in% c("ALTO PARAGUAY","BOQUERON","PRESIDENTE HAYES"),"CHACO","OTHERS")) %>%
   group_by(soy_def_yr_diff,distrito,dpto,region) %>%
   summarize(n_samples =n()) %>%
+  filter(soy_def_yr_diff >= 0) %>%
   print()
 
 count_pos_neg_yr_samples <- py_soy_def_yr_diff %>%
-  mutate(yr_diff_type = ifelse(soy_def_yr_diff > 0,"positive","negative")) %>%
+  mutate(yr_diff_type = ifelse(soy_def_yr_diff >= 0,"positive","negative")) %>%
   group_by(yr_diff_type) %>%
   summarize(n_samples = sum(n_samples)) %>%
   print()
