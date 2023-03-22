@@ -111,7 +111,7 @@ py_soy_def_yr_diff <- py_def_long %>%
          soy_def_yr_diff = ifelse(first_yr_soy > 0, first_yr_soy - first_yr_def,0)) %>%
   filter(first_yr_soy != 0) %>%
   left_join(sample_adm,by="id") %>%
-  mutate(region = ifelse(dpto %in% c("ALTO PARAGUAY","BOQUERON","PRESIDENTE HAYES"),"CHACO","OTHERS")) %>%
+  mutate(region = ifelse(dpto %in% c("ALTO PARAGUAY","BOQUERON","PRESIDENTE HAYES"),"CHACO","EASTERN PARAGUAY")) %>%
   group_by(soy_def_yr_diff,distrito,dpto,region) %>%
   summarize(n_samples =n()) %>%
   filter(soy_def_yr_diff >= 0) %>%
@@ -141,22 +141,22 @@ py_yr_defor_type <- py_def_long %>%
 theme_plot <- theme(text = element_text(family = "DM Sans",colour="#3A484F"),
                     panel.background = element_rect(colour=NA,fill=NA),
                     panel.grid.minor = element_blank(),
-                    panel.grid.major.y = element_line(color="grey70",linetype="dashed",linewidth=0.35),
+                    panel.grid.major.y = element_line(color="grey70",linetype="dashed"),
                     plot.title = element_text(hjust = 0.5),
                     axis.line.x = element_line(),
                     axis.ticks.x = element_blank(),
                     axis.ticks.y = element_blank(),
                     panel.spacing = unit(2, "lines"),
-                    axis.text.x = element_text(size = 24, color = "grey30",angle = 0, face="bold"),
-                    axis.text.y = element_text(size = 24, color = "grey30"),
-                    axis.title.x = element_text(size = 22, color = "grey30"),
-                    axis.title.y = element_text(size = 22, color = "grey30"),
-                    strip.text.x = element_text(size = 25, face = "bold",color="grey30"),
+                    axis.text.x = element_text(size = 12, color = "grey30",angle = 0),
+                    axis.text.y = element_text(size = 12, color = "grey30"),
+                    axis.title.x = element_text(size = 12, color = "grey30"),
+                    axis.title.y = element_text(size = 12, color = "grey30"),
+                    strip.text.x = element_text(size = 12, color="grey30"),
                     strip.background = element_rect(color=NA, fill=NA),
                     legend.key.height = unit(12, "pt"),
                     legend.key.width = unit(12, "pt"),
-                    legend.text = element_text(size = 24,colour="grey30"),
-                    legend.title = element_text(size = 20,colour="grey30"),
+                    legend.text = element_text(size = 12,colour="grey30"),
+                    legend.title = element_text(size = 12,colour="grey30"),
                     legend.position="bottom",
                     legend.direction="horizontal",
                     plot.margin=unit(c(0.1,0.1,0.1,0.1),"in"))
@@ -189,7 +189,7 @@ p2a <- ggplot(data = subset(py_soy_def_yr_diff,region == "CHACO"), aes(x = soy_d
   scale_y_continuous(expand=c(0,0),limits=c(0,250)) +
   scale_x_continuous(breaks = seq(from = min(py_soy_def_yr_diff$soy_def_yr_diff), to = max(py_soy_def_yr_diff$soy_def_yr_diff), by =1),expand=c(0,0)) +
   geom_col(linewidth=0.1) +
-  ylab("No of samples converted to soy\n") +
+  ylab("No of samples\nconverted to soy") +
   xlab("Years after initial deforestation") +
   theme_plot +
   scale_fill_manual(values = c('#6a3d9a','#bdbdbd','#b15928')) +
@@ -203,7 +203,7 @@ p2b <- ggplot(data = subset(py_soy_def_yr_diff,region != "CHACO"), aes(x = soy_d
   scale_y_continuous(expand=c(0,0),limits=c(0,250)) +
   scale_x_continuous(breaks = seq(from = min(py_soy_def_yr_diff$soy_def_yr_diff), to = max(py_soy_def_yr_diff$soy_def_yr_diff), by =1),expand=c(0,0)) +
   geom_col(linewidth=0.1) +
-  ylab("No of samples converted to soy\n") +
+  ylab("No of samples\nconverted to soy") +
   xlab("Years after initial deforestation") +
   theme_plot +
   scale_fill_manual(values = c('#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c',
@@ -215,10 +215,10 @@ p2b <- ggplot(data = subset(py_soy_def_yr_diff,region != "CHACO"), aes(x = soy_d
 
 p2b
 
-p2 <- p2a | p2b
+p2 <- p2a / p2b
 p2
 
-ggsave(p2,file=paste0(wdir,"out\\plots\\soy_deforestation_gfc_lossyr_chaco_others_plot.png"), dpi=300, w=12, h=6, units = "in") 
+ggsave(p2,file=paste0(wdir,"out\\plots\\soy_deforestation_gfc_lossyr_chaco_others_plot.png"), dpi=300, w=7.5, h=10, units = "in") 
 
 
 # plot 3: Deforestation land cover type by year
