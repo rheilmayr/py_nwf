@@ -31,6 +31,10 @@ library(sf)
 library(dlookr)
 library(khroma)
 library(patchwork)
+library(showtext)
+
+showtext_auto()
+showtext_opts(dpi = 300)
 
 # set working directory --------------------------------------
 wdir <- "remote/"
@@ -149,8 +153,9 @@ py_yr_defor_type <- py_def_long %>%
     ) 
   ) %>%
   left_join(sample_adm,by="id") %>%
+  mutate(region = ifelse(dpto %in% c("ALTO PARAGUAY","BOQUERON","PRESIDENTE HAYES"),"CHACO","EASTERN PARAGUAY")) %>%
   drop_na(dpto) %>%
-  group_by(first_yr_def,type1,distrito,dpto) %>%
+  group_by(first_yr_def,type1,distrito,dpto,region) %>%
   summarize(n_samples = n()) %>%
   print()
 
@@ -237,7 +242,7 @@ p2b
 p2 <- p2a / p2b
 p2
 
-ggsave(p2,file=paste0(wdir,"out\\plots\\soy_deforestation_gfc_lossyr_chaco_others_plot.png"), dpi=300, w=7.5, h=10, units = "in") 
+ggsave(p2,file=paste0(wdir,"out\\plots\\soy_deforestation_gfc_lossyr_chaco_others_plot1.png"), dpi=300, w=7.5, h=10, units = "in") 
 
 
 # plot 3: Deforestation land cover type by year
@@ -247,12 +252,13 @@ p3 <- ggplot(data = py_yr_defor_type, aes(x = first_yr_def, y = n_samples,fill=t
   scale_y_continuous(expand=c(0,0)) +
   geom_col(linewidth=0.1) +
   ylab("No of samples\n") +
-  xlab("Year") +
+  xlab("\nYear") +
   theme_plot +
-  #scale_fill_manual(values = c('#a6cee3','#fb9a99')) +
-  #scale_color_manual(values = c('#a6cee3','#fb9a99')) +
-  guides(fill = guide_legend(title.position = "top",title="Land cover in 2021"),color=FALSE)
+  scale_fill_manual(values = c('#cab2d6','#fdbf6f','#fb9a99','#b2df8a','#a6cee3')) +
+  scale_color_manual(values = c('#cab2d6','#fdbf6f','#fb9a99','#b2df8a','#a6cee3')) +
+  guides(fill = guide_legend(title.position = "top",title="Land cover in 2021"),color=FALSE)+
+  facet_wrap(~region,nrow=2)
 
 p3
 
-ggsave(p3,file=paste0(wdir,"out\\plots\\deforestation_type_plot.png"), dpi=300, w=8, h=5, units = "in") 
+ggsave(p3,file=paste0(wdir,"out\\plots\\py_deforestation_type_region_plot.png"), dpi=300, w=7.5, h=10, units = "in") 
