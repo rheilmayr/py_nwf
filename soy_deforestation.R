@@ -78,7 +78,7 @@ py_soy_long <- py_soy %>%
 
 # mapbiomas lulc in 2021
 py_mapb_lulc_long <- py_lulc %>%
-  select(id=`system:index`,.geo,starts_with("classification")) %>%
+  select(id=id,.geo,starts_with("classification")) %>%
   select(-.geo) %>%
   pivot_longer(cols = classification_2010:classification_2021,names_to = "year", values_to = "mapb_class") %>%
   mutate(year = str_sub(year, -4, -1)) %>%
@@ -131,15 +131,25 @@ count_pos_neg_yr_samples <- py_soy_def_yr_diff %>%
   summarize(n_samples = sum(n_samples)) %>%
   print()
 
-## count of samples deforested for soy/others
+## count of samples deforested for soy/others based on mapB classes
 py_yr_defor_type <- py_def_long %>%
   #select(-deforestation) %>%
   left_join(select(py_soy_long,id,first_yr_soy),by="id") %>%
   left_join(py_lc_2021,by="id") %>%
   mutate(type = ifelse(soy_2021 == 1,"Soy","Other"),
          first_yr_def = as.numeric(first_yr_def)) %>%
+  left_join(select(py_mapb_lulc_long,id,mapb_class),by="id") %>%
+  mutate(
+    type1 = case_when(
+      mapb_class == "15" & type != "Soy" ~ "Pasture",
+      (mapb_class == "18" | mapb_class == 19 | mapb_class == 57 | mapb_class == 58) & type != "Soy"  ~ "Crops",
+      mapb_class == "3" & type != "Soy" ~ "Vegetation",
+      TRUE ~ type
+    ) 
+  ) %>%
   left_join(sample_adm,by="id") %>%
-  group_by(first_yr_def,type,distrito,dpto) %>%
+  drop_na(dpto) %>%
+  group_by(first_yr_def,type1,distrito,dpto) %>%
   summarize(n_samples = n()) %>%
   print()
 
