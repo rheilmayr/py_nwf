@@ -37,8 +37,8 @@ wdir <- "remote/"
 
 ## read data -------------------------------------------------
 
-# extracted soy annual cover and mapbiomas annual deforestation
-#py_soy_def <- read_csv(paste0(wdir,"in/gee/py_random_pts_annual_soy_expansion_mapb_def_chaco.csv"))
+# extracted mapbiomas annual lulc
+py_mapb_lulc <- read_csv(paste0(wdir,"in/gee/py_random_pts_mapbiomas_classes.csv"))
 # soy cover
 py_soy <- read_csv(paste0(wdir,"in/gee/py_random_pts_annual_soy.csv"))
 # gfc forest loss year
@@ -76,6 +76,15 @@ py_soy_long <- py_soy %>%
   slice(match(1,soy_cover)) %>%
   print()
 
+# mapbiomas lulc in 2021
+py_mapb_lulc_long <- py_lulc %>%
+  select(id=`system:index`,.geo,starts_with("classification")) %>%
+  select(-.geo) %>%
+  pivot_longer(cols = classification_2010:classification_2021,names_to = "year", values_to = "mapb_class") %>%
+  mutate(year = str_sub(year, -4, -1)) %>%
+  filter(year == 2021) %>%
+  print()
+
 # deforestation
 py_def_long <- py_soy_def %>%
   filter(veg_mask_2009 == 1) %>% # filter to only areas starting with veg
@@ -95,7 +104,6 @@ py_def_long <- py_gfc_lossyr %>%
   select(-lossyear) %>%
   filter(first_yr_def > 2009)
   
-
 py_lc_2021 <- py_soy %>%
   select(id=`system:index`,soy_2021)
 
