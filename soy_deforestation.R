@@ -141,9 +141,10 @@ py_yr_defor_type <- py_def_long %>%
   left_join(select(py_mapb_lulc_long,id,mapb_class),by="id") %>%
   mutate(
     type1 = case_when(
-      mapb_class == "15" & type != "Soy" ~ "Pasture",
-      (mapb_class == "18" | mapb_class == 19 | mapb_class == 57 | mapb_class == 58) & type != "Soy"  ~ "Crops",
-      mapb_class == "3" & type != "Soy" ~ "Vegetation",
+      mapb_class == 15 & type != "Soy" ~ "Pasture",
+      (mapb_class == 18 | mapb_class == 19 | mapb_class == 57 | mapb_class == 58) & type != "Soy"  ~ "Other Agriculture",
+      (mapb_class == 3| mapb_class == 6 | mapb_class == 43 | mapb_class == 11) & type != "Soy" ~ "Vegetation",
+      mapb_class == 26 & type != "Soy" ~ "Water bodies",
       TRUE ~ type
     ) 
   ) %>%
@@ -241,15 +242,15 @@ ggsave(p2,file=paste0(wdir,"out\\plots\\soy_deforestation_gfc_lossyr_chaco_other
 
 # plot 3: Deforestation land cover type by year
 
-p3 <- ggplot(data = py_yr_defor_type, aes(x = first_yr_def, y = n_samples,fill=type,color=type)) + 
+p3 <- ggplot(data = py_yr_defor_type, aes(x = first_yr_def, y = n_samples,fill=type1,color=type1)) + 
   scale_x_continuous(breaks=seq(from=2010,to=2021,by=1)) +
   scale_y_continuous(expand=c(0,0)) +
   geom_col(linewidth=0.1) +
   ylab("No of samples\n") +
   xlab("Year") +
   theme_plot +
-  scale_fill_manual(values = c('#a6cee3','#fb9a99')) +
-  scale_color_manual(values = c('#a6cee3','#fb9a99')) +
+  #scale_fill_manual(values = c('#a6cee3','#fb9a99')) +
+  #scale_color_manual(values = c('#a6cee3','#fb9a99')) +
   guides(fill = guide_legend(title.position = "top",title="Land cover in 2021"),color=FALSE)
 
 p3
