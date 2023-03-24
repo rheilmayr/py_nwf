@@ -311,6 +311,12 @@ tm_basemap("Stamen.TonerLite") +
 
 tm_basemap("Stamen.TonerLite") +
   tm_shape(total_defor) + 
+  tm_bubbles(col = "gaez_attainable_yield_2000", size = .1, border.col = NA, palette = "viridis") +
+  tm_tiles("Stamen.TonerLabels")
+
+
+tm_basemap("Stamen.TonerLite") +
+  tm_shape(total_defor) + 
   tm_bubbles(col = "sltr_dist", size = .05, border.col = NA) +
   tm_tiles("Stamen.TonerLabels")
 
