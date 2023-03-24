@@ -59,28 +59,40 @@ lc_class_long <- lc_class %>%
   select(ID,DPTO,DISTRITO,DPTO_DESC,DIST_DESC,REGION,CLASS_DESC,AREA_HA) %>%
   filter(REGION == "CHACO")
 
+## text stats -----------------------------------------------------
+# Total areas across the Chaco
+aggregate_areas <- lc_class_long %>% 
+  group_by(REGION, CLASS_DESC) %>% 
+  summarise(area_ha = sum(AREA_HA)) %>% 
+  print()
+
+# Percent expansion from OWL
+aggregate_areas[3,3] / aggregate_areas[1,3]
+
+
+
 ## plot -----------------------------------------------------
 
 # set up theme
 theme_plot <- theme(text = element_text(family = "DM Sans",colour="#3A484F"),
                     panel.background = element_rect(colour=NA,fill=NA),
                     panel.grid.minor = element_blank(),
-                    panel.grid.major.x = element_line(color="grey70",linetype="dashed",linewidth=0.35),
+                    panel.grid.major.y = element_line(color="grey70",linetype="dashed"),
                     plot.title = element_text(hjust = 0.5),
-                    axis.line.y = element_line(),
+                    axis.line.x = element_line(),
                     axis.ticks.x = element_blank(),
                     axis.ticks.y = element_blank(),
                     panel.spacing = unit(2, "lines"),
-                    axis.text.x = element_text(size = 22, color = "grey30",angle = 0, face="bold"),
-                    axis.text.y = element_text(size = 22, color = "grey30"),
-                    axis.title.x = element_text(size = 22, color = "grey30"),
-                    axis.title.y = element_text(size = 22, color = "grey30"),
-                    strip.text.x = element_text(size = 25, face = "bold",color="grey30"),
+                    axis.text.x = element_text(size = 12, color = "grey30",angle = 0),
+                    axis.text.y = element_text(size = 12, color = "grey30"),
+                    axis.title.x = element_text(size = 12, color = "grey30"),
+                    axis.title.y = element_text(size = 12, color = "grey30"),
+                    strip.text.x = element_text(size = 12, color="grey30"),
                     strip.background = element_rect(color=NA, fill=NA),
                     legend.key.height = unit(12, "pt"),
                     legend.key.width = unit(12, "pt"),
-                    legend.text = element_text(size = 24,colour="grey30"),
-                    legend.title = element_text(size = 20,colour="grey30"),
+                    legend.text = element_text(size = 12,colour="grey30"),
+                    legend.title = element_text(size = 12,colour="grey30"),
                     legend.position="bottom",
                     legend.direction="horizontal",
                     plot.margin=unit(c(0.1,0.1,0.1,0.1),"in"))
