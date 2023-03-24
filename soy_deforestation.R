@@ -31,14 +31,18 @@ library(sf)
 library(dlookr)
 library(khroma)
 library(patchwork)
+library(showtext)
+
+showtext_auto()
+showtext_opts(dpi = 300)
 
 # set working directory --------------------------------------
 wdir <- "remote/"
 
 ## read data -------------------------------------------------
 
-# extracted soy annual cover and mapbiomas annual deforestation
-#py_soy_def <- read_csv(paste0(wdir,"in/gee/py_random_pts_annual_soy_expansion_mapb_def_chaco.csv"))
+# extracted mapbiomas annual lulc
+py_mapb_lulc <- read_csv(paste0(wdir,"in/gee/py_random_pts_mapbiomas_classes.csv"))
 # soy cover
 py_soy <- read_csv(paste0(wdir,"in/gee/py_random_pts_annual_soy.csv"))
 # gfc forest loss year
@@ -76,6 +80,15 @@ py_soy_long <- py_soy %>%
   slice(match(1,soy_cover)) %>%
   print()
 
+# mapbiomas lulc in 2021
+py_mapb_lulc_long <- py_lulc %>%
+  select(id=id,.geo,starts_with("classification")) %>%
+  select(-.geo) %>%
+  pivot_longer(cols = classification_2010:classification_2021,names_to = "year", values_to = "mapb_class") %>%
+  mutate(year = str_sub(year, -4, -1)) %>%
+  filter(year == 2021) %>%
+  print()
+
 # deforestation
 py_def_long <- py_soy_def %>%
   filter(veg_mask_2009 == 1) %>% # filter to only areas starting with veg
@@ -95,7 +108,6 @@ py_def_long <- py_gfc_lossyr %>%
   select(-lossyear) %>%
   filter(first_yr_def > 2009)
   
-
 py_lc_2021 <- py_soy %>%
   select(id=`system:index`,soy_2021)
 
@@ -123,15 +135,27 @@ count_pos_neg_yr_samples <- py_soy_def_yr_diff %>%
   summarize(n_samples = sum(n_samples)) %>%
   print()
 
-## count of samples deforested for soy/others
+## count of samples deforested for soy/others based on mapB classes
 py_yr_defor_type <- py_def_long %>%
   #select(-deforestation) %>%
   left_join(select(py_soy_long,id,first_yr_soy),by="id") %>%
   left_join(py_lc_2021,by="id") %>%
   mutate(type = ifelse(soy_2021 == 1,"Soy","Other"),
          first_yr_def = as.numeric(first_yr_def)) %>%
+  left_join(select(py_mapb_lulc_long,id,mapb_class),by="id") %>%
+  mutate(
+    type1 = case_when(
+      mapb_class == 15 & type != "Soy" ~ "Pasture",
+      (mapb_class == 18 | mapb_class == 19 | mapb_class == 57 | mapb_class == 58) & type != "Soy"  ~ "Other Agriculture",
+      (mapb_class == 3| mapb_class == 6 | mapb_class == 43 | mapb_class == 11) & type != "Soy" ~ "Vegetation",
+      mapb_class == 26 & type != "Soy" ~ "Water bodies",
+      TRUE ~ type
+    ) 
+  ) %>%
   left_join(sample_adm,by="id") %>%
-  group_by(first_yr_def,type,distrito,dpto) %>%
+  mutate(region = ifelse(dpto %in% c("ALTO PARAGUAY","BOQUERON","PRESIDENTE HAYES"),"CHACO","EASTERN PARAGUAY")) %>%
+  drop_na(dpto) %>%
+  group_by(first_yr_def,type1,distrito,dpto,region) %>%
   summarize(n_samples = n()) %>%
   print()
 
@@ -218,22 +242,23 @@ p2b
 p2 <- p2a / p2b
 p2
 
-ggsave(p2,file=paste0(wdir,"out\\plots\\soy_deforestation_gfc_lossyr_chaco_others_plot.png"), dpi=300, w=7.5, h=10, units = "in") 
+ggsave(p2,file=paste0(wdir,"out\\plots\\soy_deforestation_gfc_lossyr_chaco_others_plot1.png"), dpi=300, w=7.5, h=10, units = "in") 
 
 
 # plot 3: Deforestation land cover type by year
 
-p3 <- ggplot(data = py_yr_defor_type, aes(x = first_yr_def, y = n_samples,fill=type,color=type)) + 
+p3 <- ggplot(data = py_yr_defor_type, aes(x = first_yr_def, y = n_samples,fill=type1,color=type1)) + 
   scale_x_continuous(breaks=seq(from=2010,to=2021,by=1)) +
   scale_y_continuous(expand=c(0,0)) +
   geom_col(linewidth=0.1) +
   ylab("No of samples\n") +
-  xlab("Year") +
+  xlab("\nYear") +
   theme_plot +
-  scale_fill_manual(values = c('#a6cee3','#fb9a99')) +
-  scale_color_manual(values = c('#a6cee3','#fb9a99')) +
-  guides(fill = guide_legend(title.position = "top",title="Land cover in 2021"),color=FALSE)
+  scale_fill_manual(values = c('#cab2d6','#fdbf6f','#fb9a99','#b2df8a','#a6cee3')) +
+  scale_color_manual(values = c('#cab2d6','#fdbf6f','#fb9a99','#b2df8a','#a6cee3')) +
+  guides(fill = guide_legend(title.position = "top",title="Land cover in 2021"),color=FALSE)+
+  facet_wrap(~region,nrow=2)
 
 p3
 
-ggsave(p3,file=paste0(wdir,"out\\plots\\deforestation_type_plot.png"), dpi=300, w=8, h=5, units = "in") 
+ggsave(p3,file=paste0(wdir,"out\\plots\\py_deforestation_type_region_plot.png"), dpi=300, w=7.5, h=10, units = "in") 
