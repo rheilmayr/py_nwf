@@ -60,7 +60,7 @@ proj = "+proj=utm +zone=21 +south +datum=WGS84 +units=m +no_defs"
 
 # get departments and districts of each sample point
 sample_adm <- py_soy %>%
-  select(id=`system:index`,.geo) %>%
+  select(id,.geo) %>%
   mutate(coordinates = gsub('.*\\[(.*)\\][^\\[]*', '\\1', .geo, perl = TRUE)) %>%
   separate(coordinates, into =c("longitude","latitude"),sep=",") %>%
   select(-.geo) %>%
@@ -72,7 +72,7 @@ sample_adm <- py_soy %>%
 # soy cover
 py_soy_long <- py_soy %>%
   #filter(veg_mask_2009 == 1) %>% # filter to only areas starting with veg
-  select(id=`system:index`,.geo,starts_with("soy")) %>%
+  select(id,.geo,starts_with("soy")) %>%
   select(-.geo) %>%
   pivot_longer(cols = soy_2001:soy_2021,names_to = "first_yr_soy", values_to = "soy_cover") %>%
   mutate(first_yr_soy = str_sub(first_yr_soy, -4, -1)) %>%
@@ -81,7 +81,7 @@ py_soy_long <- py_soy %>%
   print()
 
 # mapbiomas lulc in 2021
-py_mapb_lulc_long <- py_lulc %>%
+py_mapb_lulc_long <- py_mapb_lulc %>%
   select(id=id,.geo,starts_with("classification")) %>%
   select(-.geo) %>%
   pivot_longer(cols = classification_2010:classification_2021,names_to = "year", values_to = "mapb_class") %>%
@@ -90,15 +90,15 @@ py_mapb_lulc_long <- py_lulc %>%
   print()
 
 # deforestation
-py_def_long <- py_soy_def %>%
-  filter(veg_mask_2009 == 1) %>% # filter to only areas starting with veg
-  select(id=`system:index`,.geo,starts_with("deforestation")) %>%
-  select(-.geo) %>%
-  pivot_longer(cols = deforestation_2010:deforestation_2021,names_to = "first_yr_def", values_to = "deforestation") %>%
-  mutate(first_yr_def = str_sub(first_yr_def, -4, -1)) %>%
-  group_by(id) %>%
-  slice(match(1,deforestation)) %>%
-  print()
+# py_def_long <- py_soy_def %>%
+#   filter(veg_mask_2009 == 1) %>% # filter to only areas starting with veg
+#   select(id=`system:index`,.geo,starts_with("deforestation")) %>%
+#   select(-.geo) %>%
+#   pivot_longer(cols = deforestation_2010:deforestation_2021,names_to = "first_yr_def", values_to = "deforestation") %>%
+#   mutate(first_yr_def = str_sub(first_yr_def, -4, -1)) %>%
+#   group_by(id) %>%
+#   slice(match(1,deforestation)) %>%
+#   print()
 
 py_def_long <- py_gfc_lossyr %>%
   filter(!is.na(lossyear)) %>%
@@ -109,7 +109,7 @@ py_def_long <- py_gfc_lossyr %>%
   filter(first_yr_def > 2009)
   
 py_lc_2021 <- py_soy %>%
-  select(id=`system:index`,soy_2021)
+  select(id,soy_2021)
 
 # calculations ---------------------------------------------
 
@@ -146,15 +146,20 @@ py_yr_defor_type <- py_def_long %>%
   mutate(
     type1 = case_when(
       mapb_class == 15 & type != "Soy" ~ "Pasture",
-      (mapb_class == 18 | mapb_class == 19 | mapb_class == 57 | mapb_class == 58) & type != "Soy"  ~ "Other Agriculture",
-      (mapb_class == 3| mapb_class == 6 | mapb_class == 43 | mapb_class == 11) & type != "Soy" ~ "Vegetation",
-      mapb_class == 26 & type != "Soy" ~ "Water bodies",
+      mapb_class == 22 & type != "Soy" ~ "Non vegetated areas",
+      (mapb_class == 18 | mapb_class == 19 | mapb_class == 57 | mapb_class == 58 | mapb_class == 14 | mapb_class == 9 |
+      mapb_class == 21 | mapb_class == 36) & type != "Soy"  ~ "Other Agriculture",
+      (mapb_class == 3 | mapb_class == 6 | mapb_class == 43 | mapb_class == 11 | mapb_class == 12 |
+      mapb_class == 1 | mapb_class == 3| mapb_class == 4 | mapb_class == 5 | mapb_class == 45 | mapb_class == 10 |
+      mapb_class == 13 | mapb_class == 42 | mapb_class == 43 | mapb_class == 44 | mapb_class == 49 |
+      mapb_class == 32 | mapb_class == 29 | mapb_class == 50) & type != "Soy" ~ "Vegetation",
+      (mapb_class == 26 | mapb_class == 33 ) & type != "Soy" ~ "Water bodies",
       TRUE ~ type
     ) 
   ) %>%
   left_join(sample_adm,by="id") %>%
   mutate(region = ifelse(dpto %in% c("ALTO PARAGUAY","BOQUERON","PRESIDENTE HAYES"),"CHACO","EASTERN PARAGUAY")) %>%
-  drop_na(dpto) %>%
+  drop_na(mapb_class) %>%
   group_by(first_yr_def,type1,distrito,dpto,region) %>%
   summarize(n_samples = n()) %>%
   print()
@@ -247,15 +252,17 @@ ggsave(p2,file=paste0(wdir,"out\\plots\\soy_deforestation_gfc_lossyr_chaco_other
 
 # plot 3: Deforestation land cover type by year
 
-p3 <- ggplot(data = py_yr_defor_type, aes(x = first_yr_def, y = n_samples,fill=type1,color=type1)) + 
+p3 <- ggplot(data = py_yr_defor_type, aes(x = first_yr_def, y = n_samples,
+      fill=factor(type1, levels=c("Other Agriculture","Soy","Pasture","Vegetation","Water bodies","Non vegetated areas")),
+      color=factor(type1, levels=c("Other Agriculture","Soy","Pasture","Vegetation","Water bodies","Non vegetated areas")))) + 
   scale_x_continuous(breaks=seq(from=2010,to=2021,by=1)) +
   scale_y_continuous(expand=c(0,0)) +
   geom_col(linewidth=0.1) +
   ylab("No of samples\n") +
   xlab("\nYear") +
   theme_plot +
-  scale_fill_manual(values = c('#cab2d6','#fdbf6f','#fb9a99','#b2df8a','#a6cee3')) +
-  scale_color_manual(values = c('#cab2d6','#fdbf6f','#fb9a99','#b2df8a','#a6cee3')) +
+  scale_fill_manual(values = c('#cab2d6','#fb9a99','#fdbf6f','#b2df8a','#a6cee3','#bdbdbd')) +
+  scale_color_manual(values = c('#cab2d6','#fb9a99','#fdbf6f','#b2df8a','#a6cee3','#bdbdbd')) +
   guides(fill = guide_legend(title.position = "top",title="Land cover in 2021"),color=FALSE)+
   facet_wrap(~region,nrow=2)
 
